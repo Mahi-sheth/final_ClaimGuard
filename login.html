@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ClaimGuard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            color: #667eea;
+            font-size: 2rem;
+        }
+
+        .logo p {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .otp-section {
+            display: none;
+        }
+
+        .otp-section.visible {
+            display: block;
+        }
+
+        .send-otp-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+            transition: background 0.3s;
+        }
+
+        .send-otp-btn:hover {
+            background: #45a049;
+        }
+
+        .send-otp-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .timer {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>ClaimGuard</h1>
+            <p>Sign in to your account</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required placeholder="Enter your full name">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required placeholder="Enter your phone number">
+            </div>
+
+            <button type="button" class="send-otp-btn" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
+
+            <div class="otp-section" id="otpSection">
+                <div class="form-group">
+                    <label for="otp">Enter OTP</label>
+                    <input type="text" id="otp" name="otp" placeholder="Enter 6-digit OTP" maxlength="6">
+                </div>
+                <div class="timer" id="timer"></div>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn" style="display: none;">Sign In</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        let otpRequestTimer;
+        let timeLeft = 60;
+        let generatedOTP = '';
+
+        function sendOTP() {
+            const phone = document.getElementById('phone').value;
+            const name = document.getElementById('name').value;
+
+            if (!phone || phone.length < 10) {
+                document.getElementById('errorMessage').textContent = 'Please enter a valid phone number';
+                document.getElementById('errorMessage').classList.add('visible');
+                return;
+            }
+
+            if (!name) {
+                document.getElementById('errorMessage').textContent = 'Please enter your name';
+                document.getElementById('errorMessage').classList.add('visible');
+                return;
+            }
+
+            // Generate a random 6-digit OTP
+            generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // In a real application, you would send this OTP via SMS
+            // For demo purposes, we'll show it in an alert
+            alert(`Your OTP is: ${generatedOTP}\n(In a real app, this would be sent via SMS)`);
+
+            // Show OTP section and login button
+            document.getElementById('otpSection').classList.add('visible');
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('sendOtpBtn').disabled = true;
+            
+            // Start timer
+            timeLeft = 60;
+            updateTimer();
+            otpRequestTimer = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            if (timeLeft > 0) {
+                timerElement.textContent = `OTP expires in ${timeLeft} seconds`;
+                timeLeft--;
+            } else {
+                clearInterval(otpRequestTimer);
+                timerElement.textContent = 'OTP expired. Please request again.';
+                document.getElementById('sendOtpBtn').disabled = false;
+                document.getElementById('otpSection').classList.remove('visible');
+                document.getElementById('loginBtn').style.display = 'none';
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const otp = document.getElementById('otp').value;
+
+            // Clear any existing error
+            document.getElementById('errorMessage').classList.remove('visible');
+
+            // Validate OTP
+            if (!otp || otp.length !== 6) {
+                document.getElementById('errorMessage').textContent = 'Please enter a valid 6-digit OTP';
+                document.getElementById('errorMessage').classList.add('visible');
+                return;
+            }
+
+            // Verify OTP
+            if (otp !== generatedOTP) {
+                document.getElementById('errorMessage').textContent = 'Invalid OTP. Please try again.';
+                document.getElementById('errorMessage').classList.add('visible');
+                return;
+            }
+
+            if (timeLeft <= 0) {
+                document.getElementById('errorMessage').textContent = 'OTP has expired. Please request a new one.';
+                document.getElementById('errorMessage').classList.add('visible');
+                return;
+            }
+
+            document.getElementById('loginBtn').disabled = true;
+            document.getElementById('loginBtn').textContent = 'Signing in...';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, phone })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById('errorMessage').classList.add('visible');
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('loginBtn').textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>
