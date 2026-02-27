@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaimGuard Dashboard - Policy Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0a1e32;
+            --secondary-color: #1e3a5f;
+            --accent-color: #3498db;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: white !important;
+            transform: translateY(-2px);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 15px 20px;
+            border: none;
+        }
+        
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .risk-card {
+            padding: 20px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .risk-card h3 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .badge {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+        }
+        
+        .table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chart-container img {
+            max-width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: white;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        
+        .loading-spinner.show {
+            display: block;
+        }
+        
+        .spinner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            z-index: 9998;
+        }
+        
+        .spinner-overlay.show {
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .btn-analyze {
+            animation: pulse 2s infinite;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>ClaimGuard AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#upload"><i class="fas fa-upload me-1"></i>Upload</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#analysis"><i class="fas fa-chart-pie me-1"></i>Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#history"><i class="fas fa-history me-1"></i>History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Welcome Banner -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h4><i class="fas fa-user-circle me-2"></i>Welcome, {{ user.name if user else 'User' }}!</h4>
+                        <p class="mb-0">Upload your insurance policy for AI-powered risk analysis and visualization.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="row" id="upload">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload me-2"></i>Upload Policy Document</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Policy Type</label>
+                                    <select class="form-select" name="policyType" id="policyType" required>
+                                        <option value="Health Insurance">Health Insurance</option>
+                                        <option value="Car Insurance">Car Insurance</option>
+                                        <option value="Life Insurance">Life Insurance</option>
+                                        <option value="Travel Insurance">Travel Insurance</option>
+                                        <option value="Home Insurance">Home Insurance</option>
+                                        <option value="Bike Insurance">Bike Insurance</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Age</label>
+                                    <input type="number" class="form-control" name="age" id="age" value="35" min="18" max="100" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Pre-existing Disease (if any)</label>
+                                    <input type="text" class="form-control" name="disease" id="disease" placeholder="e.g., Diabetes, None">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">PDF File</label>
+                                    <input type="file" class="form-control" name="file" id="file" accept=".pdf" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary btn-analyze">
+                                        <i class="fas fa-robot me-2"></i>Analyze Policy
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Results Section -->
+        <div class="row mt-4" id="analysis">
+            <div class="col-12">
+                <div id="analysisResults"></div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="row mt-4" id="history">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history me-2"></i>Recent Analyses</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentPolicies" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Policy ID</th>
+                                        <th>Type</th>
+                                        <th>Overall Risk</th>
+                                        <th>Coverage</th>
+                                        <th>Cost</th>
+                                        <th>Delay</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentPoliciesBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center">No analyses yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="spinnerOverlay"></div>
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 ClaimGuard AI - Intelligent Insurance Policy Analysis</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show/hide loading spinner
+        function showLoading() {
+            document.getElementById('spinnerOverlay').classList.add('show');
+            document.getElementById('loadingSpinner').classList.add('show');
+        }
+        
+        function hideLoading() {
+            document.getElementById('spinnerOverlay').classList.remove('show');
+            document.getElementById('loadingSpinner').classList.remove('show');
+        }
+        
+        // Logout function
+        function logout() {
+            window.location.href = '/api/logout';
+        }
+        
+        // Load recent policies on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecentPolicies();
+        });
+        
+        // Load recent policies
+        async function loadRecentPolicies() {
+            try {
+                const response = await fetch('/api/recent-policies');
+                const policies = await response.json();
+                
+                const tbody = document.getElementById('recentPoliciesBody');
+                if (policies && policies.length > 0) {
+                    tbody.innerHTML = policies.map(policy => `
+                        <tr>
+                            <td><code>${policy.id.substring(0, 8)}</code></td>
+                            <td><span class="badge bg-info">${policy.policy_type}</span></td>
+                            <td>
+                                <span class="badge ${policy.risk_scores.overall_risk <= 30 ? 'bg-success' : policy.risk_scores.overall_risk <= 60 ? 'bg-warning' : 'bg-danger'}">
+                                    ${policy.risk_scores.overall_risk}%
+                                </span>
+                            </td>
+                            <td>${policy.risk_scores.coverage_risk}%</td>
+                            <td>${policy.risk_scores.cost_risk}%</td>
+                            <td>${policy.risk_scores.delay_risk}%</td>
+                            <td>${new Date(policy.upload_time).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="viewPolicy('${policy.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="downloadReport('${policy.id}')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading recent policies:', error);
+            }
+        }
+        
+        // View policy details
+        function viewPolicy(policyId) {
+            // Scroll to analysis section
+            document.getElementById('analysis').scrollIntoView({ behavior: 'smooth' });
+            
+            // You can implement loading specific policy details here
+            alert('View policy: ' + policyId);
+        }
+        
+        // Download report
+        function downloadReport(policyId) {
+            window.location.href = `/api/generate-report/${policyId}`;
+        }
+        
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // Validate file
+            const file = document.getElementById('file').files[0];
+            if (!file) {
+                alert('Please select a PDF file');
+                return;
+            }
+            
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Only PDF files are allowed');
+                return;
+            }
+            
+            if (file.size > 16 * 1024 * 1024) {
+                alert('File size must be less than 16MB');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/analyze-policy', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAnalysisResults(data.policy, data.visualizations);
+                    loadRecentPolicies(); // Refresh recent policies
+                } else {
+                    alert('Error: ' + (data.error || 'Analysis failed'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error analyzing policy: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // Display analysis results with charts
+        function displayAnalysisResults(policy, visualizations) {
+            const resultsDiv = document.getElementById('analysisResults');
+            
+            // Get risk level class
+            function getRiskLevelClass(risk) {
+                if (risk <= 30) return 'bg-success';
+                if (risk <= 60) return 'bg-warning';
+                if (risk <= 80) return 'bg-orange';
+                return 'bg-danger';
+            }
+            
+            // Get risk factors table HTML
+            function getRiskFactorsTable(risks) {
+                if (!risks || risks.length === 0) return '';
+                
+                return `
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Identified Risk Factors</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Risk Factor</th>
+                                                    <th>Impact</th>
+                                                    <th>Score</th>
+                                                    <th>Description</th>
+                                                    <th>Recommendation</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${risks.map(risk => `
+                                                    <tr>
+                                                        <td><strong>${risk.factor}</strong></td>
+                                                        <td>
+                                                            <span class="badge 
+                                                                ${risk.impact === 'Critical' ? 'bg-danger' : 
+                                                                  risk.impact === 'High' ? 'bg-warning' : 
+                                                                  risk.impact === 'Medium-High' ? 'bg-info' : 
+                                                                  risk.impact === 'Medium' ? 'bg-primary' : 'bg-secondary'}">
+                                                                ${risk.impact}
+                                                            </span>
+                                                        </td>
+                                                        <td>${risk.score}</td>
+                                                        <td>${risk.description}</td>
+                                                        <td>${risk.recommendation}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Build the HTML
+            resultsDiv.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line me-2"></i>Analysis Results - Policy ${policy.id.substring(0, 8)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Charts Row -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Risk Distribution</h6>
+                                    </div>
+                                    <div class="card-body text-center chart-container">
+                                        ${visualizations && visualizations.risk_pie ? 
+                                            `<img src="data:image/png;base64,${visualizations.risk_pie}" class="img-fluid" alt="Risk Pie Chart">` : 
+                                            `<div class="alert alert-info">Risk pie chart not available</div>`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Policy vs Industry Average</h6>
+                                    </div>
+                                    <div class="card-body text-center chart-container">
+                                        ${visualizations && visualizations.comparison_chart ? 
+                                            `<img src="data:image/png;base64,${visualizations.comparison_chart}" class="img-fluid" alt="Comparison Chart">` : 
+                                            `<div class="alert alert-info">Comparison chart not available</div>`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Risk Breakdown Chart (if available) -->
+                        ${visualizations && visualizations.risk_breakdown ? `
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-warning text-white">
+                                            <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Risk Factor Breakdown</h6>
+                                        </div>
+                                        <div class="card-body text-center chart-container">
+                                            <img src="data:image/png;base64,${visualizations.risk_breakdown}" class="img-fluid" alt="Risk Breakdown Chart">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Risk Scores Cards -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Risk Assessment Dashboard</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4 text-center">
+                                                <div class="risk-card">
+                                                    <h3 class="text-danger">${policy.risk_scores.coverage_risk}%</h3>
+                                                    <p class="mb-2">Coverage Risk</p>
+                                                    <div class="progress">
+                                                        <div class="progress-bar bg-danger" role="progressbar" 
+                                                             style="width: ${policy.risk_scores.coverage_risk}%"></div>
+                                                    </div>
+                                                    <small class="text-muted">Risk of claim rejection</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="risk-card">
+                                                    <h3 class="text-info">${policy.risk_scores.cost_risk}%</h3>
+                                                    <p class="mb-2">Out-of-Pocket Risk</p>
+                                                    <div class="progress">
+                                                        <div class="progress-bar bg-info" role="progressbar" 
+                                                             style="width: ${policy.risk_scores.cost_risk}%"></div>
+                                                    </div>
+                                                    <small class="text-muted">Risk of high out-of-pocket costs</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="risk-card">
+                                                    <h3 class="text-primary">${policy.risk_scores.delay_risk}%</h3>
+                                                    <p class="mb-2">Delay Risk</p>
+                                                    <div class="progress">
+                                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                                             style="width: ${policy.risk_scores.delay_risk}%"></div>
+                                                    </div>
+                                                    <small class="text-muted">Risk of claim settlement delay</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-center mt-4">
+                                            <h4>Overall Risk Score: ${policy.risk_scores.overall_risk}%</h4>
+                                            <div class="progress mt-2" style="height: 30px;">
+                                                <div class="progress-bar ${getRiskLevelClass(policy.risk_scores.overall_risk)}" 
+                                                     role="progressbar" 
+                                                     style="width: ${policy.risk_scores.overall_risk}%; height: 30px;"
+                                                     aria-valuenow="${policy.risk_scores.overall_risk}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    ${policy.risk_scores.overall_risk}% Overall Risk
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Policy Details -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Policy Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>Policy Type:</th>
+                                                <td><span class="badge bg-info">${policy.policy_type}</span></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Detected Type:</th>
+                                                <td>${policy.detected_type || 'N/A'}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Policy Number:</th>
+                                                <td><code>${policy.policy_number}</code></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Sum Insured:</th>
+                                                <td>${policy.sum_insured}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Premium:</th>
+                                                <td>${policy.premium}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Pages:</th>
+                                                <td>${policy.page_count || 'N/A'}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-coins me-2"></i>Financial Details</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>Co-pay:</th>
+                                                <td>${policy.financial_details.co_pay_percentage}%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Deductible:</th>
+                                                <td>₹${policy.financial_details.deductible?.toLocaleString() || '0'}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Room Rent Cap:</th>
+                                                <td>${policy.financial_details.room_rent_cap || 'Not specified'}</td>
+                                            </tr>
+                                            ${Object.entries(policy.financial_details.sub_limits || {}).map(([key, value]) => `
+                                                <tr>
+                                                    <th>${key.charAt(0).toUpperCase() + key.slice(1)} Sub-limit:</th>
+                                                    <td>₹${value.toLocaleString()}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Benefits and Exclusions -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Key Benefits</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush">
+                                            ${policy.benefits && policy.benefits.length > 0 ? 
+                                                policy.benefits.slice(0, 5).map(benefit => `
+                                                    <li class="list-group-item">
+                                                        <i class="fas fa-check text-success me-2"></i>
+                                                        ${benefit.text}
+                                                    </li>
+                                                `).join('') : 
+                                                '<li class="list-group-item">No benefits listed</li>'
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0"><i class="fas fa-times-circle me-2"></i>Key Exclusions</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush">
+                                            ${policy.exclusions && policy.exclusions.length > 0 ? 
+                                                policy.exclusions.slice(0, 5).map(exclusion => `
+                                                    <li class="list-group-item">
+                                                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                                        ${exclusion}
+                                                    </li>
+                                                `).join('') : 
+                                                '<li class="list-group-item">No exclusions listed</li>'
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Risk Factors Table -->
+                        ${getRiskFactorsTable(policy.risks)}
+                        
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                <button class="btn btn-success me-2" onclick="downloadReport('${policy.id}')">
+                                    <i class="fas fa-download me-2"></i>Download PDF Report
+                                </button>
+                                <button class="btn btn-primary" onclick="simulateClaim('${policy.id}')">
+                                    <i class="fas fa-calculator me-2"></i>Simulate Claim
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Scroll to results
+            document.getElementById('analysis').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Simulate claim function
+        async function simulateClaim(policyId) {
+            const claimAmount = prompt('Enter claim amount (in ₹):', '500000');
+            if (!claimAmount) return;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/simulate-claim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ policy_id: policyId, claim_amount: parseFloat(claimAmount) })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`
+                        Claim Simulation Results:
+                        Claim Amount: ₹${data.simulation.claim_amount.toLocaleString()}
+                        Insurance Pays: ₹${data.simulation.insurance_pays.toLocaleString()}
+                        You Pay: ₹${data.simulation.out_of_pocket.toLocaleString()}
+                        Coverage: ${data.simulation.coverage_percentage}%
+                    `);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error simulating claim: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html>
