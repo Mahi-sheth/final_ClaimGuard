@@ -1,16 +1,13 @@
-<<<<<<< HEAD
 Flask==2.3.3
 flask-cors==4.0.0
 PyPDF2==3.0.1
 reportlab==4.0.4
 matplotlib==3.7.2
 numpy==1.24.3
-=======
-Flask==2.3.3
-flask-cors==4.0.0
-PyPDF2==3.0.1
-reportlab==4.0.4
-matplotlib==3.7.2
-numpy==1.24.3
->>>>>>> 95c0bd35b4f695cb9732bc2ce9d6a01d8f79b75f
 werkzeug==2.3.7
+fpdf==1.7.2
+Pillow==10.0.0
+openai==1.12.0
+pdfplumber==0.10.3
+pydantic==2.5.3
+python-dotenv==1.0.0

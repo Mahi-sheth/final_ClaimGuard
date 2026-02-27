@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 from fpdf import FPDF
 import io
 from datetime import datetime
@@ -137,7 +137,7 @@ You Pay: Rs {int(claim_amount - insurance_pays):,}"""
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
     
-=======
+
 from fpdf import FPDF
 import io
 from datetime import datetime
@@ -276,5 +276,5 @@ You Pay: Rs {int(claim_amount - insurance_pays):,}"""
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
     
->>>>>>> 95c0bd35b4f695cb9732bc2ce9d6a01d8f79b75f
+
     return pdf_buffer

@@ -1,0 +1,2 @@
+# Create empty folder structure
+echo. > uploads\.gitkeep
